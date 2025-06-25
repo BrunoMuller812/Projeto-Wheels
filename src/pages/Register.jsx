@@ -5,7 +5,6 @@ import { useAuth } from '../context/AuthContext';
 function Register() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-
     const [cpf, setCpf] = useState('');
     const [nomeCompleto, setNomeCompleto] = useState('');
     const [genero, setGenero] = useState('');
@@ -45,19 +44,19 @@ function Register() {
             formatted = '(' + cleaned.substring(0, 2);
         }
         if (cleaned.length > 2) {
-            formatted += ') ' + cleaned.substring(2, 7); 
+            formatted += ') ' + cleaned.substring(2, 7);
         }
         if (cleaned.length > 7) {
-            formatted += '-' + cleaned.substring(7, 11); 
+            formatted += '-' + cleaned.substring(7, 11);
         }
         
-        if (cleaned.length <= 10 && cleaned.length > 6) { 
+        if (cleaned.length <= 10 && cleaned.length > 6) {
              formatted = '(' + cleaned.substring(0, 2) + ') ' + cleaned.substring(2, 6) + '-' + cleaned.substring(6, 10);
-        } else if (cleaned.length > 10) { 
+        } else if (cleaned.length > 10) {
             formatted = '(' + cleaned.substring(0, 2) + ') ' + cleaned.substring(2, 7) + '-' + cleaned.substring(7, 11);
-        } else if (cleaned.length > 2 && cleaned.length <= 6) { 
+        } else if (cleaned.length > 2 && cleaned.length <= 6) {
             formatted = '(' + cleaned.substring(0, 2) + ') ' + cleaned.substring(2);
-        } else if (cleaned.length > 0 && cleaned.length <= 2) { 
+        } else if (cleaned.length > 0 && cleaned.length <= 2) {
              formatted = '(' + cleaned;
         }
 
@@ -120,7 +119,10 @@ function Register() {
             const newCustomer = await response.json();
             console.log('Cliente cadastrado na API:', newCustomer);
 
-            const localRegistrationSuccess = register(username, password, newCustomer.customerID, newCustomer.cpf);
+            // --- MODIFICAÇÃO CRUCIAL AQUI: Passando newCustomer.customerID ---
+            const localRegistrationSuccess = register(username, password, newCustomer.customerID); 
+            // --- FIM DA MODIFICAÇÃO CRUCIAL ---
+
             if (localRegistrationSuccess) {
                 setSuccess('Cadastro de cliente e conta de usuário realizados com sucesso! Redirecionando para o login...');
                 setTimeout(() => {
@@ -148,7 +150,6 @@ function Register() {
                     {error && <p style={styles.error}>{error}</p>}
                     {success && <p style={styles.success}>{success}</p>}
 
-                    {/* Seção Dados de Login */}
                     <div style={styles.sectionHeader}>Dados de Login</div>
                     <div style={styles.formSection}>
                         <div style={styles.inputGroup}>
@@ -177,7 +178,6 @@ function Register() {
                         </div>
                     </div>
 
-                    {/* Seção Informações Pessoais */}
                     <div style={styles.sectionHeader}>Informações Pessoais</div>
                     <div style={styles.formSectionGrid}>
                         <div style={styles.inputGroup}>
@@ -212,12 +212,11 @@ function Register() {
                         </div>
                     </div>
 
-                    {/* Seção Contato e Localização */}
                     <div style={styles.sectionHeader}>Contato e Localização</div>
                     <div style={styles.formSectionGrid}>
                         <div style={styles.inputGroup}>
-                            <label htmlFor="email" style={styles.label}>E-mail</label>
-                            <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} style={styles.input} placeholder="Ensira seu melhor e-mail" required />
+                            <label htmlFor="email" style={styles.label}>Email</label>
+                            <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} style={styles.input} placeholder="seu.email@example.com" required />
                         </div>
                         <div style={styles.inputGroup}>
                             <label htmlFor="celular" style={styles.label}>Celular</label>
@@ -227,8 +226,8 @@ function Register() {
                                 value={celular}
                                 onChange={(e) => setCelular(formatCelular(e.target.value))}
                                 style={styles.input}
-                                placeholder="(XX) XXXXX-XXXX" 
-                                maxLength="15" 
+                                placeholder="(XX) XXXXX-XXXX"
+                                maxLength="15"
                                 required
                             />
                         </div>
@@ -277,7 +276,7 @@ const styles = {
         borderRadius: '16px',
         boxShadow: '0 10px 30px rgba(0, 0, 0, 0.15)',
         padding: '40px 35px',
-        width: '40%',
+        width: '100%',
         maxWidth: '800px',
         textAlign: 'center',
         display: 'flex',
@@ -300,7 +299,7 @@ const styles = {
     subtitle: {
         fontSize: '16px',
         color: '#7f8c8d',
-        marginBottom: '0px',
+        marginBottom: '30px',
     },
     form: {
         display: 'flex',

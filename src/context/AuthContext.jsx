@@ -42,16 +42,16 @@ export function AuthProvider({ children }) {
             localStorage.setItem('loggedInUser', JSON.stringify(foundUser));
             return foundUser; 
         }
-        return false; 
+        return false;
     };
 
-    const register = (username, password, customerId = null, cpf = null) => {
+    const register = (username, password, customerId = null) => { 
         const userExists = users.some(u => u.username === username);
         if (userExists) {
             return false;
         }
 
-        const newUser = { username, password, role: 'user', customerId, cpf };
+        const newUser = { username, password, role: 'user', customerId }; 
         setUsers(prevUsers => [...prevUsers, newUser]);
         return true;
     };

@@ -3,7 +3,13 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import Register from './pages/Register';
 import AvailableBikes from './pages/AvailableBikes'; 
-import HomeAdmin from './pages/HomeAdmin'; 
+
+import HomeAdmin from './pages/admin/HomeAdmin';
+import RegisterSalesPage from './pages/admin/RegisterSalesPage';
+import ConsultSalesPage from './pages/admin/ConsultSalesPage';
+import ManageBikesPage from './pages/admin/ManageBikes';
+
+import PaymentPage from './pages/PaymentPage'; 
 import { PrivateRoute } from './components/PrivateRoute';
 import { useAuth } from './context/AuthContext'; 
 
@@ -59,6 +65,41 @@ function App() {
                     <AdminRoute> 
                         <HomeAdmin />
                     </AdminRoute>
+                }
+            />
+
+            <Route
+                path="/admin/register-sales"
+                element={
+                    <AdminRoute>
+                        <RegisterSalesPage />
+                    </AdminRoute>
+                }
+            />
+            <Route
+                path="/admin/consult-sales"
+                element={
+                    <AdminRoute>
+                        <ConsultSalesPage />
+                    </AdminRoute>
+                }
+            />
+            
+            <Route
+                path="/admin/manage-bikes"
+                element={
+                    <AdminRoute>
+                        <ManageBikesPage />
+                    </AdminRoute>
+                }
+            />
+
+            <Route
+                path="/payment"
+                element={
+                    <PrivateRoute> 
+                        <PaymentPage /> 
+                    </PrivateRoute>
                 }
             />
 

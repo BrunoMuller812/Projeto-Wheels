@@ -1,32 +1,46 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { FaSearch } from 'react-icons/fa';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 function AvailableBikes() {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+
     const [bikes, setBikes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    useEffect(() => {
-        const fetchBikes = async () => {
-            try {
-                console.log("Buscando bicicletas... A primeira requisição pode demorar um pouco.");
-                const response = await fetch('https://wheels-api-r0ea.onrender.com/api/bikes');
+    const [showRentalModal, setShowRentalModal] = useState(false);
+    const [selectedBikeForRental, setSelectedBikeForRental] = useState(null);
+    const [expectedReturnDateOnly, setExpectedReturnDateOnly] = useState('');
+    const [expectedReturnTimeOnly, setExpectedReturnTimeOnly] = useState('');
+    const [rentalObservations, setRentalObservations] = useState('');
+    const [modalError, setModalError] = useState('');
 
-                if (!response.ok) {
-                    throw new Error(`Erro HTTP! status: ${response.status}`);
-                }
+    const fetchBikes = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            console.log("Buscando bicicletas... A primeira requisição pode demorar um minuto.");
+            const response = await fetch('https://wheels-api-r0ea.onrender.com/api/bikes');
 
-                const data = await response.json();
-                setBikes(data);
-            } catch (err) {
-                console.error("Falha ao buscar bicicletas:", err);
-                setError("Não foi possível carregar as bicicletas. Tente novamente mais tarde.");
-            } finally {
-                setLoading(false);
+            if (!response.ok) {
+                throw new Error(`Erro HTTP! status: ${response.status}`);
             }
-        };
 
+            const data = await response.json();
+            setBikes(data);
+        } catch (err) {
+            console.error("Falha ao buscar bicicletas:", err);
+            setError("Não foi possível carregar as bicicletas. Tente novamente mais tarde.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchBikes();
     }, []);
 
@@ -44,6 +58,63 @@ function AvailableBikes() {
             return matchesId || matchesModel;
         });
     }, [bikes, searchTerm]);
+
+    const openRentalModal = (bike) => {
+        setSelectedBikeForRental(bike);
+        setExpectedReturnDateOnly(''); 
+        setExpectedReturnTimeOnly('');
+        setRentalObservations('');
+        setModalError('');
+        setShowRentalModal(true);
+    };
+
+    const closeRentalModal = () => {
+        setShowRentalModal(false);
+        setSelectedBikeForRental(null);
+        setModalError('');
+    };
+
+    const handleProceedToPayment = (e) => {
+        e.preventDefault();
+        setModalError('');
+
+        const combinedExpectedReturnDate = `${expectedReturnDateOnly}T${expectedReturnTimeOnly}`;
+
+        if (!expectedReturnDateOnly || !expectedReturnTimeOnly) {
+            setModalError('Por favor, selecione a data E a hora de retorno esperada.');
+            return;
+        }
+
+        const now = new Date();
+        const returnDateTime = new Date(combinedExpectedReturnDate);
+
+        if (isNaN(returnDateTime.getTime())) { 
+            setModalError('Data ou hora de retorno inválida. Por favor, verifique.');
+            return;
+        }
+        
+        const minReturnTime = new Date(now.getTime() + (10 * 60 * 1000)); 
+
+        if (returnDateTime < minReturnTime) {
+            setModalError('A data e hora de retorno devem ser no futuro (pelo menos 10 minutos a partir de agora).');
+            return;
+        }
+
+        if (!user || !user.customerId) {
+            setModalError('Erro: Não foi possível obter seu ID de cliente. Por favor, faça login novamente.');
+            return;
+        }
+
+        navigate('/payment', {
+            state: {
+                bike: selectedBikeForRental,
+                expectedReturnDate: combinedExpectedReturnDate,
+                observations: rentalObservations,
+            }
+        });
+
+        closeRentalModal();
+    };
 
     return (
         <div style={pageStyles.container}>
@@ -93,7 +164,7 @@ function AvailableBikes() {
                                 </p>
                                 {bike.disponivel ? (
                                     <button
-                                        onClick={() => alert(`Você clicou em alugar a ${bike.modelo} (ID: ${bike.bikeID})`)}
+                                        onClick={() => openRentalModal(bike)}
                                         style={bikeListStyles.rentButton}
                                     >
                                         ALUGAR
@@ -109,6 +180,64 @@ function AvailableBikes() {
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {showRentalModal && selectedBikeForRental && (
+                <div style={modalStyles.overlay}>
+                    <div style={modalStyles.modal}>
+                        <h3 style={modalStyles.modalTitle}>Alugar: {selectedBikeForRental.modelo} (ID: {selectedBikeForRental.bikeID})</h3>
+                        <form onSubmit={handleProceedToPayment} style={modalStyles.form}>
+                            {modalError && <p style={modalStyles.errorMessage}>{modalError}</p>}
+                            
+                            <div style={modalStyles.inputGroup}>
+                                <label htmlFor="expectedReturnDate" style={modalStyles.label}>Data de Retorno Esperada:</label>
+                                <input
+                                    type="date" 
+                                    id="expectedReturnDate"
+                                    value={expectedReturnDateOnly}
+                                    onChange={(e) => setExpectedReturnDateOnly(e.target.value)}
+                                    style={modalStyles.input}
+                                    required
+                                />
+                            </div>
+                            <div style={modalStyles.inputGroup}>
+                                <label htmlFor="expectedReturnTime" style={modalStyles.label}>Hora de Retorno Esperada:</label>
+                                <input
+                                    type="time" 
+                                    id="expectedReturnTime"
+                                    value={expectedReturnTimeOnly}
+                                    onChange={(e) => setExpectedReturnTimeOnly(e.target.value)}
+                                    style={modalStyles.input}
+                                    required
+                                />
+                            </div>
+
+                            <div style={modalStyles.inputGroup}>
+                                <label htmlFor="observations" style={modalStyles.label}>Observações (opcional):</label>
+                                <textarea
+                                    id="observations"
+                                    value={rentalObservations}
+                                    onChange={(e) => setRentalObservations(e.target.value)}
+                                    style={modalStyles.textarea}
+                                    rows="3"
+                                ></textarea>
+                            </div>
+
+                            <div style={modalStyles.buttonGroup}>
+                                <button 
+                                    type="submit" 
+                                    style={modalStyles.primaryButton} 
+                                    disabled={!!modalError || !user?.customerId} 
+                                >
+                                    Prosseguir para Pagamento
+                                </button>
+                                <button type="button" onClick={closeRentalModal} style={modalStyles.secondaryButton}>
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>
@@ -144,14 +273,14 @@ const pageStyles = {
         fontSize: '1.1em',
         color: 'red',
         marginTop: '20px',
-    }
+    },
 };
 
 const searchStyles = {
     searchBoxContainer: {
-        width: '49%',
+        width: '100%',
         display: 'flex',
-        justifyContent: 'flex-start',
+        justifyContent: 'center',
         marginBottom: '30px',
     },
     searchInputWrapper: {
@@ -161,7 +290,7 @@ const searchStyles = {
         maxWidth: '600px',
         backgroundColor: '#fff',
         border: '1px solid #ccc',
-        borderRadius: '10px',
+        borderRadius: '25px',
         boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
         overflow: 'hidden',
         padding: '0',
@@ -183,6 +312,10 @@ const searchStyles = {
         outline: 'none',
         background: 'none',
         color: '#333',
+        '::placeholder': {
+            color: '#aaa',
+            opacity: '1',
+        },
     },
 };
 
@@ -291,6 +424,120 @@ const bikeListStyles = {
         fontWeight: '600',
         alignSelf: 'flex-start',
         marginTop: 'auto',
+    }
+};
+
+const modalStyles = {
+    overlay: {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1000,
+    },
+    modal: {
+        backgroundColor: '#fff',
+        padding: '30px',
+        borderRadius: '10px',
+        boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)',
+        maxWidth: '500px',
+        width: '90%',
+        textAlign: 'left',
+        position: 'relative',
+    },
+    modalTitle: {
+        fontSize: '1.8em',
+        color: '#2c3e50',
+        marginBottom: '20px',
+        textAlign: 'center',
+    },
+    form: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '15px',
+    },
+    inputGroup: {
+        marginBottom: '10px',
+    },
+    label: {
+        display: 'block',
+        fontSize: '1em',
+        color: '#34495e',
+        marginBottom: '5px',
+        fontWeight: 'bold',
+    },
+    input: {
+        width: 'calc(100% - 22px)',
+        padding: '10px',
+        borderRadius: '5px',
+        border: '1px solid #dcdfe6',
+        fontSize: '1em',
+    },
+    textarea: {
+        width: 'calc(100% - 22px)',
+        padding: '10px',
+        borderRadius: '5px',
+        border: '1px solid #dcdfe6',
+        fontSize: '1em',
+        resize: 'vertical',
+    },
+    buttonGroup: {
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: '10px',
+        marginTop: '20px',
+    },
+    primaryButton: {
+        padding: '10px 20px',
+        backgroundColor: '#007bff',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        fontSize: '1em',
+        transition: 'background-color 0.3s ease',
+    },
+    secondaryButton: {
+        padding: '10px 20px',
+        backgroundColor: '#6c757d',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        fontSize: '1em',
+        transition: 'background-color 0.3s ease',
+    },
+    message: {
+        color: '#007bff',
+        backgroundColor: '#e0f7fa',
+        padding: '8px',
+        borderRadius: '5px',
+        marginBottom: '10px',
+        fontSize: '0.9em',
+        border: '1px solid #007bff',
+    },
+    errorMessage: {
+        color: '#e74c3c',
+        backgroundColor: '#fdeded',
+        padding: '8px',
+        borderRadius: '5px',
+        marginBottom: '10px',
+        fontSize: '0.9em',
+        border: '1px solid #e74c3c',
+    },
+    successMessage: {
+        color: '#28a745',
+        backgroundColor: '#e6ffed',
+        padding: '8px',
+        borderRadius: '5px',
+        marginBottom: '10px',
+        fontSize: '0.9em',
+        border: '1px solid #28a745',
     }
 };
 

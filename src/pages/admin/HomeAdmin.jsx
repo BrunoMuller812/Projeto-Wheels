@@ -1,7 +1,7 @@
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-import MainLayout from '../components/layout/MainLayout';
+import MainLayout from '../../components/layout/MainLayout';
 
 function HomeAdmin() {
     const { user, logout } = useAuth();
@@ -9,27 +9,27 @@ function HomeAdmin() {
 
     const handleLogout = () => {
         logout();
-        navigate('/'); 
+        navigate('/');
     };
 
     const handleManageBikes = () => {
-        alert('Navegar para Gerenciar Bicicletas (funcionalidade em desenvolvimento)');
+        navigate('/admin/manage-bikes');
     };
 
     const handleSalesRegistration = () => {
-        alert('Navegar para Cadastro de Vendas (funcionalidade em desenvolvimento)');
+        navigate('/admin/register-sales');
     };
 
     const handleSalesConsultation = () => {
-        alert('Navegar para Consulta de Vendas (funcionalidade em desenvolvimento)');
+        navigate('/admin/consult-sales');
     };
 
     const handleViewAvailableBikes = () => {
-        navigate('/bikes'); 
+        navigate('/bikes');
     };
 
     return (
-        <MainLayout> 
+        <MainLayout>
             <div style={adminStyles.container}>
                 <h2 style={adminStyles.welcomeTitle}>Bem-vindo, {user?.username} (Admin)!</h2>
                 <p style={adminStyles.description}>Aqui você tem acesso às ferramentas de gerenciamento do sistema.</p>
@@ -71,7 +71,7 @@ const adminStyles = {
     },
     buttonGrid: {
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
         gap: '20px',
         width: '100%',
         maxWidth: '800px',

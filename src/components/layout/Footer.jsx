@@ -5,7 +5,7 @@ function Footer() {
         <footer style={footerStyles.footer}>
             <div style={footerStyles.footerContent}>
                 <div style={footerStyles.section}>
-                    <h3 style={footerStyles.sectionTitle}>Wheels — Alugueis de Bicicletas</h3>
+                    <h3 style={footerStyles.sectionTitle}>Wheels - Aluguel de Bicicletas</h3>
                     <p style={footerStyles.text}>Alugue a bicicleta perfeita para sua aventura urbana ou trilha!</p>
                     <p style={footerStyles.contactInfo}>
                         Email: contato@wheels.com <br/>
@@ -39,7 +39,7 @@ function Footer() {
                 </div>
             </div>
             <div style={footerStyles.copyright}>
-                <p>&copy; {new Date().getFullYear()} Wheels Aluguel de Bicicletas. Todos os direitos reservados.</p>
+                <p>&copy; {new Date().getFullYear()} Wheels - Aluguel de Bicicletas. Todos os direitos reservados.</p>
             </div>
         </footer>
     );
